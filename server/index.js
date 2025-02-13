@@ -6,7 +6,7 @@ const app = express()
 const server = http.createServer(app)
 
 const io = new Server(server, {
-    cors: true
+    cors: ['https://vdocall-1rhg.vercel.app/']
 })
 
 const emailToSocketIdMap = new Map()

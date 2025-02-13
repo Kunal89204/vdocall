@@ -12,7 +12,7 @@ export const useSocket = () => {
 
 const SocketProvider = (props) => {
 
-  const socket = useMemo(() => io('http://192.168.1.34:8000/'), [])
+  const socket = useMemo(() => io('https://vdocall-eta.vercel.app/'), [])
   return (
     <SocketContext.Provider value={socket}>
       {props.children}
