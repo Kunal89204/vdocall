@@ -8,6 +8,7 @@ const Room = () => {
     const [remoteSocketId, setRemoteSocketId] = useState(null);
     const [myStream, setMyStream] = useState(null);
     const myVideoRef = useRef(null);
+    const [remoteStream, setRemoteStream] = useState()
 
     const handleCallUser = useCallback(async () => {
         try {
@@ -28,29 +29,29 @@ const Room = () => {
     const handleIncomingCall = useCallback(async ({ from, offer }) => {
         try {
             setRemoteSocketId(from);
-    
+
             // Get user media stream
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             setMyStream(stream);
-    
+
             // Assign stream to video element
             if (myVideoRef.current) {
                 myVideoRef.current.srcObject = stream;
             }
-    
+
             console.log('Incoming call from:', from, 'Offer:', offer);
-    
+
             // Generate answer for the offer
             const ans = await peer.getAnswer(offer);
-    
+
             // Emit the answer back to the caller
             socket.emit('call:accepted', { to: from, ans });
-    
+
         } catch (error) {
             console.error('Error handling incoming call:', error);
         }
     }, [socket]);
-    
+
 
     const handleUserJoined = useCallback(({ email, id }) => {
         console.log('User joined the room:', { email, id });
@@ -60,6 +61,10 @@ const Room = () => {
     const handleCallAccepted = useCallback(async ({ from, ans }) => {
         peer.setLocalDescription(ans)
         console.log('Call Accepted!');
+
+        for (const track of myStream.getTracks()) {
+            peer.peer.addTrack(track, myStream)
+        }
     }, [])
 
     useEffect(() => {
@@ -67,12 +72,20 @@ const Room = () => {
         socket.on('incoming:call', handleIncomingCall)
         socket.on('call:accepted', handleCallAccepted)
 
+
         return () => {
             socket.off('user:joined', handleUserJoined);
             socket.off('incoming:call', handleIncomingCall);
             socket.off('call:accepted', handleCallAccepted)
         };
     }, [socket, handleUserJoined, handleCallAccepted, handleIncomingCall]);
+
+    useEffect(() => {
+        peer.peer.addEventListener('track', async ev => {
+            const remoteStream = ev.streams
+            setRemoteStream(remoteStream)
+        })
+    }, [])
 
     useEffect(() => {
         // Ensure video updates when myStream changes
@@ -90,6 +103,9 @@ const Room = () => {
 
             {myStream && (
                 <video ref={myVideoRef} autoPlay playsInline width="300" height="200" />
+            )}
+            {remoteStream && (
+                <video ref={remoteStream} autoPlay playsInline width="300" height="200" />
             )}
         </div>
     );

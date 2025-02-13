@@ -7,7 +7,7 @@ const server = http.createServer(app)
 
 const io = new Server(server, {
     cors: {
-        origin:['https://vdocall-1rhg.vercel.app'],
+        origin:['https://vdocall-1rhg.vercel.app', 'http://localhost:5173'],
         methods:['POST', "GET"],
         credentials:true
     }
